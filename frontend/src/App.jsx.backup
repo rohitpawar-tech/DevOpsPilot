@@ -1,0 +1,155 @@
+import { useState } from "react";
+import "./App.css";
+
+const initialPipelines = [
+  { id: 1, name: "frontend-build", branch: "main", status: "Success", time: "2 min ago" },
+  { id: 2, name: "backend-tests", branch: "develop", status: "Failed", time: "15 min ago" },
+  { id: 3, name: "docker-deploy", branch: "main", status: "Running", time: "Just now" },
+  { id: 4, name: "security-check", branch: "main", status: "Success", time: "1 hour ago" },
+];
+
+function App() {
+  const [pipelines, setPipelines] = useState(initialPipelines);
+  const [filter, setFilter] = useState("All");
+  const [logs, setLogs] = useState("");
+  const [analysis, setAnalysis] = useState("");
+
+  const successful = pipelines.filter(p => p.status === "Success").length;
+  const failed = pipelines.filter(p => p.status === "Failed").length;
+  const running = pipelines.filter(p => p.status === "Running").length;
+
+  const visiblePipelines = filter === "All"
+    ? pipelines
+    : pipelines.filter(p => p.status === filter);
+
+  function analyzeLogs() {
+    if (!logs.trim()) {
+      setAnalysis("Please enter a log message first.");
+      return;
+    }
+
+    const message = logs.toLowerCase();
+    if (message.includes("modulenotfounderror") || message.includes("module not found")) {
+      setAnalysis("Possible cause: a required module is missing. Check your dependencies and install the missing package.");
+    } else if (message.includes("permission denied")) {
+      setAnalysis("Possible cause: insufficient permissions. Check file permissions and the user running the process.");
+    } else if (message.includes("connection refused")) {
+      setAnalysis("Possible cause: the target service may not be running or the port may be incorrect. Check service status and network settings.");
+    } else if (message.includes("failed") || message.includes("error")) {
+      setAnalysis("An error was detected. Review the lines immediately before this message and check configuration, dependencies and application logs.");
+    } else {
+      setAnalysis("No common error pattern detected. Review the full logs and verify the application configuration. This is a basic rule-based demo, not a real AI diagnosis.");
+    }
+  }
+
+  function simulatePipeline() {
+    const id = Date.now();
+    setPipelines(current => [
+      { id, name: "manual-build", branch: "main", status: "Running", time: "Just now" },
+      ...current
+    ]);
+    setFilter("All");
+  }
+
+  return (
+    <div className="app-shell">
+      <aside className="sidebar">
+        <div className="brand"><span className="brand-icon">D</span><span>DevOpsPilot</span></div>
+        <p className="nav-heading">WORKSPACE</p>
+        <div className="nav-item active"><span>▦</span> Overview</div>
+        <div className="nav-item"><span>⑂</span> Pipelines</div>
+        <div className="nav-item"><span>▣</span> Deployments</div>
+        <div className="nav-item"><span>◈</span> Containers</div>
+        <div className="nav-item"><span>✳</span> Log Analyzer</div>
+        <div className="sidebar-bottom">
+          <div className="online-dot"></div>
+          <div><strong>Local workspace</strong><small>Demo environment</small></div>
+        </div>
+      </aside>
+
+      <main className="main-content">
+        <header className="topbar">
+          <div><span className="breadcrumb">Workspace /</span> Overview</div>
+          <div className="profile"><span className="online-dot"></span> Developer <span className="avatar">R</span></div>
+        </header>
+
+        <section className="welcome">
+          <div>
+            <p className="eyebrow">DEVOPS CONTROL CENTER</p>
+            <h1>Good morning, Rohit.</h1>
+            <p className="muted">Monitor pipelines, deployments and application health in one place.</p>
+          </div>
+          <button className="primary-btn" onClick={simulatePipeline}>＋ New Pipeline Demo</button>
+        </section>
+
+        <section className="stats-grid">
+          <article className="stat-card">
+            <div className="stat-top"><span>Total Pipelines</span><span className="stat-icon blue">⑂</span></div>
+            <strong>{pipelines.length}</strong><small>Tracked in this demo</small>
+          </article>
+          <article className="stat-card">
+            <div className="stat-top"><span>Successful</span><span className="stat-icon green">✓</span></div>
+            <strong>{successful}</strong><small>Completed successfully</small>
+          </article>
+          <article className="stat-card">
+            <div className="stat-top"><span>Failed</span><span className="stat-icon red">!</span></div>
+            <strong>{failed}</strong><small>Need investigation</small>
+          </article>
+          <article className="stat-card">
+            <div className="stat-top"><span>Running</span><span className="stat-icon purple">↻</span></div>
+            <strong>{running}</strong><small>Currently in progress</small>
+          </article>
+        </section>
+
+        <section className="content-grid">
+          <article className="panel pipeline-panel">
+            <div className="panel-heading">
+              <div><h2>Recent Pipelines</h2><p className="muted">Latest workflow activity</p></div>
+              <select value={filter} onChange={e => setFilter(e.target.value)} aria-label="Filter pipelines">
+                <option>All</option>
+                <option>Success</option>
+                <option>Failed</option>
+                <option>Running</option>
+              </select>
+            </div>
+            <div className="pipeline-list">
+              {visiblePipelines.map(pipeline => (
+                <div className="pipeline-row" key={pipeline.id}>
+                  <div className="pipeline-symbol">⌘</div>
+                  <div className="pipeline-info"><strong>{pipeline.name}</strong><small>{pipeline.branch} · {pipeline.time}</small></div>
+                  <span className={"status " + pipeline.status.toLowerCase()}>{pipeline.status}</span>
+                </div>
+              ))}
+              {visiblePipelines.length === 0 && <p className="muted empty">No pipelines match this filter.</p>}
+            </div>
+            <p className="demo-note">Sample data only · GitHub integration not connected</p>
+          </article>
+
+          <article className="panel health-panel">
+            <div className="panel-heading"><div><h2>System Overview</h2><p className="muted">Local demo status</p></div><span className="status running">Demo</span></div>
+            <div className="health-item"><span>Frontend</span><strong><i className="health-dot"></i> Online</strong></div>
+            <div className="health-item"><span>Java Backend</span><strong className="muted">Not connected</strong></div>
+            <div className="health-item"><span>MySQL</span><strong className="muted">Not connected</strong></div>
+            <div className="health-item"><span>Docker</span><strong className="muted">Not connected</strong></div>
+            <div className="health-footer">Integrations will be configured in upcoming steps.</div>
+          </article>
+        </section>
+
+        <section className="panel analyzer-panel">
+          <div className="panel-heading">
+            <div><h2>Log Analyzer</h2><p className="muted">Get basic troubleshooting suggestions from an error log.</p></div>
+            <span className="ai-tag">✳ Rule-based demo</span>
+          </div>
+          <textarea value={logs} onChange={e => setLogs(e.target.value)} placeholder={"Paste an error log here...\nExample: ModuleNotFoundError: No module named 'requests'"} />
+          <button className="primary-btn" onClick={analyzeLogs}>Analyze Logs →</button>
+          {analysis && <div className="analysis-result"><strong>Analysis result</strong><p>{analysis}</p></div>}
+        </section>
+
+        <footer>DevOpsPilot <span>·</span> Learning project by Rohit Pawar <span>·</span> Frontend v0.1</footer>
+      </main>
+    </div>
+  );
+}
+
+export default App;
+'@ | Set-Content -Encoding utf8 .\src\App.jsx
